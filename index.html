@@ -4,43 +4,103 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Received Goods Log</title>
+  <link rel="manifest" href="manifest.json">
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
     label { font-weight: bold; margin-bottom: 4px; }
-    input, textarea { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+    input, select, textarea { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
     button { padding: 12px; background: #0078d4; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
     button:disabled { background: #999; }
   </style>
-  <link rel="manifest" href="manifest.json">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
 </head>
 <body>
 
   <h2>Goods Receipt Form</h2>
   <form id="receiptForm">
     <div class="form-group"><label>Date / Time</label><input type="datetime-local" id="dateTime" required></div>
-    <div class="form-group"><label>Customer</label><input type="text" id="customer" required></div>
-    <div class="form-group"><label>ERP Code</label><input type="text" id="erpCode" required></div>
+    
+    <div class="form-group">
+      <label>Customer</label>
+      <select id="customer" required>
+        <option value="" disabled selected>Select a Customer...</option>
+      </select>
+    </div>
+
+    <!-- Datalist enables type-ahead searching -->
+    <div class="form-group">
+      <label>ERP Code (Type to search)</label>
+      <input list="erpList" id="erpCode" required placeholder="Type or select ERP Code...">
+      <datalist id="erpList"></datalist>
+    </div>
+
     <div class="form-group"><label>Description</label><input type="text" id="description"></div>
-    <div class="form-group"><label>Actual Version</label><input type="text" id="actualVersion"></div>
-    <div class="form-group"><label>No. of Pallet(s)</label><input type="number" id="palettes" min="0" value="0"></div>
-    <div class="form-group"><label>No. of Box(es)</label><input type="number" id="boxes" min="0" value="0"></div>
+    
+    <div class="form-group">
+      <label>Actual Version</label>
+      <select id="actualVersion">
+        <option value="" disabled selected>Select a Version...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>No. of Pallet(s)</label>
+      <select id="palettes"></select>
+    </div>
+
+    <div class="form-group">
+      <label>No. of Box(es)</label>
+      <select id="boxes"></select>
+    </div>
+
     <div class="form-group"><label>Total Qty</label><input type="number" id="totalQty" min="0" required></div>
     <div class="form-group"><label>PO #</label><input type="text" id="poNumber" required></div>
     <div class="form-group"><label>Comments</label><textarea id="comments" rows="3"></textarea></div>
+    
     <button type="submit" id="submitBtn">Submit Receipt</button>
   </form>
 
   <script>
-    // Set default Date/Time to current local time
-    document.getElementById('dateTime').value = new Date().toISOString().slice(0, 16);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
 
+    // REMEMBER TO PASTE YOUR ACTUAL POWER AUTOMATE URL HERE
     const FLOW_URL = "PASTE_YOUR_POWER_AUTOMATE_HTTP_POST_URL_HERE";
+
+    // --- DATA EXTRACTED FROM ItemList.xlsx ---
+    const customerList = ["AMP", "ANZ", "ANZ  NZ", "ANZ New Zealand", "CCL", "Citi Commercial", "ING", "Mastercard", "OFINA", "OFina", "Ofina", "Wirex", "Wise", "Youtrip"];
+    
+    const erpMasterList = ["17-ARTPROOF", "17-AUS.EXP.WIN-ING", "17-AUS.EXP.WIN-MPP", "17-AUS.EXPRESS-ING", "17AMP-AUSEXPWIN-AMP", "17AMP-BRGO_BKA62", "17AMP-BRGO_BKA62V2", "17AMP-BRGO_BLUEPER", "17AMP-BRGO_BLUEPERV2", "17AMP-BRGO_JOINTACCT", "17AMP-BRGO_NAVYBIZ", "17AMP-BRGO_NAVYBIZV2", "17AMP-ENVELOPEAU001", "17ANZNZ_A4Satchel", "17ANZNZ_A5Satchel", "17ANZNZ_CN22ThLabel", "17ANZNZ_Folscap28x38", "17ANZNZ_ICI-Carton", "17ANZNZ_Lnflow34x44", "17ANZ_Burgo_Joint", "17ANZ_Burgo_Joint2", "17ANZ_Burgo_Personal", "17ANZ_Burgo_Personal2", "17ANZ_Burgo_Reissue", "17ANZ_Burgo_Replacement", "17ANZ_Burgo_Replacement2", "17ANZ_IMPRINT_LABEL", "17APCTN-001", "17CCL-MCG17015", "17CL-CS6008812D_082023", "17FREIGHT", "17FREIGHT_AMP", "17ING_IM210A_REGENV", "17ING_OE00036", "17ING_OE00076", "17MASTERCARD-CTN02", "17TFCC-WISE-AUNZ-WOA-CON01", "17TRVLX- CP10758", "17TRVLX- CP10966", "17TRVLX- CP11384", "17TRVLX-CP10330", "17TRVLX-CP10331", "17TRVLX-CP10782", "17TRVLX-CP10816", "17TRVLX-CP10842", "17TRVLX-CP10961", "17TRVLX-CP10963", "17TRVLX-CP10964Vb", "17TRVLX-CP10965", "17TRVLX-CP10968", "17TRVLX-CP10968Vb", "17TRVLX-CP11085Va", "17TRVLX-CP11133Va", "17TRVLX-CP11142", "17TRVLX-CP11143", "17TRVLX-CP11144", "17TRVLX-CP11145", "17TRVLX-CP11146", "17TRVLX-CP11147", "17TRVLX-CP11305", "17TRVLX-CP11305Vb", "17TRVLX-CP11306", "17TRVLX-CP11311Vb", "17TRVLX-CP11311Vd", "17TRVLX-CP11313", "17TRVLX-CP11313Vc", "17TRVLX-CP11329", "17TRVLX-CP11350", "17TRVLX-CP11351", "17TRVLX-CP11353", "17TRVLX-CP11356", "17TRVLX-CP11375", "17TRVLX-CP11376", "17TRVLX-CP11384", "17TRVLX-CP11384Vb", "17TRVLX-CP11441", "17TRVLX-CP11442", "17TRVLX-CP11447", "17TRVLX-CP11451", "17TRVLX-CP11452", "17TRVLX-CP11453", "17TRVLX-CP11454", "17TRVLX-CP11455", "17TRVLX-CP11456", "17TRVLX-CP11468", "17TRVLX-CP11471", "17TRVLX-CP11472", "17TRVLX-CP11504", "17TRVLX-CP11504Vb", "17TRVLX-CP11505", "17TRVLX-CP11505Vb", "17TRVLX-CP11509", "17TRVLX-CP11509Vb", "17TRVLX-CP11510", "17TRVLX-CP11510Vb", "17TRVLX-CP11511", "17TRVLX-CP11512", "17TRVLX-CP11512Vb", "17TRVLX-CP11517", "17TRVLX-CP11517Vb", "17TRVLX-CP11518", "17TRVLX-CP11518Vb", "17TRVLX-CP11518Vc", "17TRVLX-CP11519", "17TRVLX-CP11519Vb", "17TRVLX-CP11519Vc", "17TRVLX-CP11520", "17TRVLX-CP11520Vb", "17TRVLX-CP11521", "17TRVLX-CP11521Vb", "17TRVLX-CP11522", "17TRVLX-CP11522Vb", "17TRVLX-CP11523", "17TRVLX-CP11524", "17TRVLX-CP11623", "17TRVLX-CP11626", "17TRVLX-CP11677", "17TRVLX-CP11678", "17TRVLX-CP11679", "17TRVLX-CP11680", "17TRVLX-CP11681", "17TRVLX-CP11682", "17TRVLX-CP11683", "17TRVLX-CP11684", "17TRVLX-CP11685", "17TRVLX-CP11686", "17TRVLX-CP11687", "17TRVLX-CP11688", "17TRVLX-FP-ENV", "17TRVLX-FP-LABEL", "17TRVLX-OFINA-LH", "17TW-CC-WISE-AUNZ-KWA-CON-001", "17TWINTENV_REBRAND", "17TWNZENV_REBRAND", "17TWPRIORITYENV_REBRAND", "17TWPRIORITYENV_REBRAND_IMPRINT02", "17WCC-WISE-AUNZ-WA-CON-002", "17WCC-WISE-AUNZ-WACT-BIZ-001", "17WCC-WISE-AUNZ-WACT-CON-001", "17WRX-ENV-001", "17YTR-CARDCARRIERA4", "17YTR-ENVELOPEDL", "17YTR-ENVELOPESQ", "17YTRP-BRGO_CC001", "17trvlx-CP10676A", "17trvlx-CP10741", "17trvlx-CP10756", "17trvlx-CP10758", "17trvlx-CP10780", "17trvlx-CP10781Va", "17trvlx-CP10795", "17trvlx-CP10805", "17trvlx-CP10962", "17trvlx-CP10962Vb", "17trvlx-CP10962", "17trvlx-CP10963", "17trvlx-CP10963", "17trvlx-CP10966vc", "17trvlx-CP10967", "17trvlx-CP11086", "17trvlx-CP11132Va", "17trvlx-carton", "17trvlx-cp10165", "17trxvlx-CP10782"];
+    
+    // Add custom versions here if you need them to be specific
+    const versionList = ["v1.0", "v2.0", "v2.1", "v3.0", "N/A"];
+    // --------------------------------------------------
+
+    // Populate Dropdowns on page load
+    window.onload = () => {
+      document.getElementById('dateTime').value = new Date().toISOString().slice(0, 16);
+
+      const customerSelect = document.getElementById('customer');
+      customerList.forEach(c => customerSelect.add(new Option(c, c)));
+
+      const versionSelect = document.getElementById('actualVersion');
+      versionList.forEach(v => versionSelect.add(new Option(v, v)));
+
+      const erpDataList = document.getElementById('erpList');
+      erpMasterList.forEach(erp => {
+        const opt = document.createElement('option');
+        opt.value = erp;
+        erpDataList.appendChild(opt);
+      });
+
+      const palettesSelect = document.getElementById('palettes');
+      const boxesSelect = document.getElementById('boxes');
+      for (let i = 0; i <= 100; i++) {
+        palettesSelect.add(new Option(i, i));
+        boxesSelect.add(new Option(i, i));
+      }
+    };
 
     document.getElementById('receiptForm').addEventListener('submit', async (e) => {
       e.preventDefault();
