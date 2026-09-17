@@ -1,0 +1,17 @@
+{
+  "name": "Goods Receipt Log",
+  "short_name": "Receipts",
+  "description": "Logistics intake form for received goods.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0078d4",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1090/1090806.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
